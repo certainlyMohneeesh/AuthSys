@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { randomBytes } from "crypto";
 import * as z from "zod";
 import * as bcrypt from "bcryptjs";
+import { sendPasswordResetEmail } from "@/lib/email";
 
 const prisma = new PrismaClient();
 
@@ -52,31 +53,21 @@ export async function POST(req: Request) {
             },
         });
 
-        // Send OTP email using testemail.app
-        const emailResponse = await fetch("https://api.testemail.app/v1/emails", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${process.env.TESTEMAIL_API_KEY}`,
-            },
-            body: JSON.stringify({
-                to: email,
-                subject: "Reset Your Password",
-                html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>Reset Your Password</h2>
-            <p>We received a request to reset your password. Use the verification code below to continue:</p>
-            <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 24px; letter-spacing: 5px; font-weight: bold; margin: 20px 0;">
-              ${otp}
-            </div>
-            <p>This code will expire in 15 minutes.</p>
-            <p>If you didn't request this password reset, please ignore this email or contact support if you have concerns.</p>
-          </div>
-        `,
-            }),
-        });
+        if (!process.env.MAILTRAP_API_KEY) {
+            console.error("MAILTRAP_API_KEY is not defined");
+            return NextResponse.json(
+                { message: "Server configuration error" },
+                { status: 500 }
+            );
+        }
 
-        if (!emailResponse.ok) {
+        console.log("API Key available:", !!process.env.MAILTRAP_API_KEY);
+        console.log("API Key length:", process.env.MAILTRAP_API_KEY?.length);
+
+        // Send OTP email using Mailtrap
+        const emailSent = await sendPasswordResetEmail(email, otp);
+
+        if (!emailSent) {
             throw new Error("Failed to send OTP email");
         }
 
@@ -97,6 +88,8 @@ export async function POST(req: Request) {
             { status: 200 }
         );
     } catch (error) {
+        console.error("Detailed error:", error);
+
         if (error instanceof z.ZodError) {
             return NextResponse.json(
                 { message: "Invalid email format" },

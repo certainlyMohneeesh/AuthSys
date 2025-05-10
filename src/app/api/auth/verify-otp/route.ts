@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import * as z from "zod";
+import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
 
@@ -49,21 +50,29 @@ export async function POST(req: Request) {
             );
         }
 
-        // Generate a new token for the password reset page
-        const newResetToken = `verified-${resetToken}`;
+        // Generate a JWT token for password reset
+        const jwtToken = jwt.sign(
+            {
+                userId: user.id,
+                email: email,
+                purpose: "password-reset"
+            },
+            process.env.NEXTAUTH_SECRET as string,
+            { expiresIn: "15m" }
+        );
 
-        // Update the token to indicate it's been verified
+        // Update the token in the database (optional)
         await prisma.passwordReset.update({
             where: { userId: user.id },
             data: {
-                token: newResetToken,
+                token: jwtToken,
             },
         });
 
         return NextResponse.json(
             {
                 message: "OTP verified successfully",
-                token: newResetToken,
+                token: jwtToken,
             },
             { status: 200 }
         );

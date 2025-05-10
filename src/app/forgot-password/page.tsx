@@ -21,6 +21,7 @@ type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 export default function ForgotPassword() {
     const [isLoading, setIsLoading] = useState(false);
     const [emailSent, setEmailSent] = useState(false);
+    const [emailValue, setEmailValue] = useState("");
 
     const form = useForm<ForgotPasswordFormValues>({
         resolver: zodResolver(forgotPasswordSchema),
@@ -31,6 +32,7 @@ export default function ForgotPassword() {
 
     async function onSubmit(data: ForgotPasswordFormValues) {
         setIsLoading(true);
+        setEmailValue(data.email);
 
         try {
             const response = await fetch("/api/auth/forgot-password", {
@@ -110,7 +112,7 @@ export default function ForgotPassword() {
                             >
                                 Didn't receive code? Try again
                             </Button>
-                            <Link href="/verify-otp" className="block">
+                            <Link href={`/verify-otp?email=${encodeURIComponent(emailValue)}`} className="block">
                                 <Button className="w-full">
                                     Enter verification code
                                 </Button>

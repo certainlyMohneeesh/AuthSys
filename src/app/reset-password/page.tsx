@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -26,7 +26,9 @@ const resetPasswordSchema = z.object({
   path: ["confirmPassword"],
 });
 
+
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
+
 
 export default function ResetPassword() {
   const router = useRouter();
@@ -37,6 +39,14 @@ export default function ResetPassword() {
   const token = searchParams.get("token") || "";
   const email = searchParams.get("email") || "";
 
+  useEffect(() => {
+    // Debug information
+    if (process.env.NODE_ENV === 'development') {
+        console.log("Token:", token);
+        console.log("Email:", email);
+    }
+}, [token, email]);
+
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
@@ -45,44 +55,49 @@ export default function ResetPassword() {
     },
   });
 
+
+
   async function onSubmit(data: ResetPasswordFormValues) {
     setIsLoading(true);
 
     try {
-      if (!token || !email) {
-        throw new Error("Missing required parameters");
-      }
+        if (!token || !email) {
+            throw new Error("Missing required parameters");
+        }
 
-      const response = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token,
-          email,
-          password: data.password,
-        }),
-      });
+        console.log("Submitting reset password with token:", token.substring(0, 10) + "...");
+        
+        const response = await fetch("/api/auth/reset-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                token,
+                email,
+                password: data.password,
+            }),
+        });
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to reset password");
-      }
+        if (!response.ok) {
+            console.error("Reset password error:", result);
+            throw new Error(result.message || "Failed to reset password");
+        }
 
-      setResetSuccess(true);
-      toast.success("Password reset successful! You can now sign in with your new password.");
+        setResetSuccess(true);
+        toast.success("Password reset successful! You can now sign in with your new password.");
 
-      // Redirect to signin page after 3 seconds
-      setTimeout(() => {
-        router.push("/sign-in");
-      }, 3000);
+        // Redirect to signin page after 3 seconds
+        setTimeout(() => {
+            router.push("/sign-in");
+        }, 3000);
 
     } catch (error: any) {
-      toast.error(error.message || "Something went wrong. Please try again.");
+        toast.error(error.message || "Something went wrong. Please try again.");
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  }
+}
 
   if (!token || !email) {
     return (
@@ -172,7 +187,7 @@ export default function ResetPassword() {
                   Your password has been reset successfully. You will be redirected to the sign-in page in a few seconds.
                 </p>
               </div>
-              <Link href="/src/app/sign-in">
+              <Link href="/sign-in">
                 <Button className="w-full">Sign In Now</Button>
               </Link>
             </div>
@@ -182,7 +197,7 @@ export default function ResetPassword() {
           <CardFooter className="text-center">
             <p className="text-sm text-muted-foreground">
               Remember your password?{" "}
-              <Link href="/src/app/sign-in" className="text-primary hover:underline">
+              <Link href="/sign-in" className="text-primary hover:underline">
                 Back to sign in
               </Link>
             </p>

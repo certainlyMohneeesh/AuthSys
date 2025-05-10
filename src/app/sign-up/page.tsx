@@ -79,6 +79,19 @@ export default function SignUp() {
                 throw new Error(result.message || "Registration failed");
             }
 
+                // Send welcome email after successful registration
+            await fetch("/api/auth/send-welcome-email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: data.email,
+                    username: data.username
+                }),
+            }).catch(error => {
+                // Log but don't block the flow if welcome email fails
+                console.error("Failed to send welcome email:", error);
+            });
+
             toast.success("Account created!", {
                 description: "You've successfully created your account. Redirecting to sign in...",
             });
@@ -203,22 +216,25 @@ export default function SignUp() {
                             )}
                         </div>
                         <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="terms"
-                                {...form.register("terms")}
-                                disabled={isLoading}
-                            />
-                            <Label htmlFor="terms" className="text-sm">
-                                I agree to the{" "}
-                                <Link href="/terms" className="text-primary hover:underline">
-                                    terms of service
-                                </Link>{" "}
-                                and{" "}
-                                <Link href="/privacy" className="text-primary hover:underline">
-                                    privacy policy
-                                </Link>
-                            </Label>
-                        </div>
+                                <Checkbox
+                                    id="terms"
+                                    checked={form.watch("terms")}
+                                    onCheckedChange={(checked) => {
+                                        form.setValue("terms", checked === true);
+                                    }}
+                                    disabled={isLoading}
+                                />
+                                <Label htmlFor="terms" className="text-sm">
+                                    I agree to the{" "}
+                                    <Link href="/terms" className="text-primary hover:underline">
+                                        terms of service
+                                    </Link>{" "}
+                                    and{" "}
+                                    <Link href="/privacy" className="text-primary hover:underline">
+                                        privacy policy
+                                    </Link>
+                                </Label>
+                            </div>
                         {form.formState.errors.terms && (
                             <p className="text-sm text-red-500">
                                 {form.formState.errors.terms.message}
@@ -300,7 +316,7 @@ export default function SignUp() {
                 <CardFooter className="text-center">
                     <p className="text-sm text-muted-foreground">
                         Already have an account?{" "}
-                        <Link href="/src/app/sign-in" className="text-primary hover:underline">
+                        <Link href="/sign-in" className="text-primary hover:underline">
                             Sign in
                         </Link>
                     </p>

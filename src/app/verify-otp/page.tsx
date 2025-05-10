@@ -219,13 +219,13 @@ export default function VerifyOtp() {
             if (!response.ok) {
                 throw new Error(result.message || "Failed to verify OTP");
             }
-
+            //After successful OTP verification
             toast.success("OTP verified", {
                 description: "Your verification was successful.",
             });
 
             // Redirect to reset password page with the token
-            router.push(`/reset-password?token=${result.token}&email=${email}`);
+            router.push(`/reset-password?token=${encodeURIComponent(result.token)}&email=${encodeURIComponent(email)}`);
 
         } catch (error: any) {
             toast.error("Error", {

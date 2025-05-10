@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import jwt from "jsonwebtoken";
-import { sendEmail } from "@/lib/email";
+import { sendPasswordChangedEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
     try {
@@ -22,8 +22,15 @@ export async function POST(request: Request) {
             decodedToken = jwt.verify(token, process.env.NEXTAUTH_SECRET as string) as {
                 userId: string;
                 email: string;
+                purpose?: string;
             };
-        } catch {
+            
+            // Add additional validation
+            if (decodedToken.purpose !== "password-reset") {
+                throw new Error("Invalid token purpose");
+            }
+        } catch (error) {
+            console.error("Token verification error:", error);
             return NextResponse.json(
                 { message: "Invalid or expired token" },
                 { status: 400 }
@@ -62,21 +69,18 @@ export async function POST(request: Request) {
         // Clean up password reset record
         await db.passwordReset.delete({
             where: { userId: user.id },
+        }).catch(err => {
+            // Just log the error but don't fail the request
+            console.error("Failed to delete password reset record:", err);
         });
 
         // Notify user about password change
-        await sendEmail({
-            to: email,
-            subject: "Password Changed Successfully",
-            html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Password Reset Successful</h2>
-          <p>Hello ${user.name || user.username || email.split("@")[0]},</p>
-          <p>Your password has been successfully changed. If you didn't make this change, please contact our support team immediately.</p>
-          <p>Thank you,<br>Your App Team</p>
-        </div>
-      `,
-        });
+        try {
+            await sendPasswordChangedEmail(email);
+        } catch (error) {
+            console.error("Failed to send password changed email:", error);
+            // Continue anyway
+        }
 
         return NextResponse.json(
             { message: "Password reset successful" },
