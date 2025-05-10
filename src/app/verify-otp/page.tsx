@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -22,7 +22,7 @@ const verifyOtpSchema = z.object({
 
 type VerifyOtpFormValues = z.infer<typeof verifyOtpSchema>;
 
-export default function VerifyOtp() {
+    function VerifyOtpForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(false);
@@ -327,12 +327,24 @@ export default function VerifyOtp() {
                 <CardFooter className="text-center">
                     <p className="text-sm text-muted-foreground">
                         Remember your password?{" "}
-                        <Link href="/src/app/sign-in" className="text-primary hover:underline">
+                        <Link href="/sign-in" className="text-primary hover:underline">
                             Back to sign in
                         </Link>
                     </p>
                 </CardFooter>
             </Card>
         </div>
+    );
+}
+// Main component with Suspense boundary
+export default function VerifyOtp() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        }>
+            <VerifyOtpForm />
+        </Suspense>
     );
 }

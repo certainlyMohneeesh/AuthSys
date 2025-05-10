@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -26,11 +26,10 @@ const resetPasswordSchema = z.object({
   path: ["confirmPassword"],
 });
 
-
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
-
-export default function ResetPassword() {
+// Create a client component that uses useSearchParams
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -42,10 +41,10 @@ export default function ResetPassword() {
   useEffect(() => {
     // Debug information
     if (process.env.NODE_ENV === 'development') {
-        console.log("Token:", token);
-        console.log("Email:", email);
+      console.log("Token:", token);
+      console.log("Email:", email);
     }
-}, [token, email]);
+  }, [token, email]);
 
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
@@ -55,49 +54,47 @@ export default function ResetPassword() {
     },
   });
 
-
-
   async function onSubmit(data: ResetPasswordFormValues) {
     setIsLoading(true);
 
     try {
-        if (!token || !email) {
-            throw new Error("Missing required parameters");
-        }
+      if (!token || !email) {
+        throw new Error("Missing required parameters");
+      }
 
-        console.log("Submitting reset password with token:", token.substring(0, 10) + "...");
-        
-        const response = await fetch("/api/auth/reset-password", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                token,
-                email,
-                password: data.password,
-            }),
-        });
+      console.log("Submitting reset password with token:", token.substring(0, 10) + "...");
+      
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token,
+          email,
+          password: data.password,
+        }),
+      });
 
-        const result = await response.json();
+      const result = await response.json();
 
-        if (!response.ok) {
-            console.error("Reset password error:", result);
-            throw new Error(result.message || "Failed to reset password");
-        }
+      if (!response.ok) {
+        console.error("Reset password error:", result);
+        throw new Error(result.message || "Failed to reset password");
+      }
 
-        setResetSuccess(true);
-        toast.success("Password reset successful! You can now sign in with your new password.");
+      setResetSuccess(true);
+      toast.success("Password reset successful! You can now sign in with your new password.");
 
-        // Redirect to signin page after 3 seconds
-        setTimeout(() => {
-            router.push("/sign-in");
-        }, 3000);
+      // Redirect to signin page after 3 seconds
+      setTimeout(() => {
+        router.push("/sign-in");
+      }, 3000);
 
     } catch (error: any) {
-        toast.error(error.message || "Something went wrong. Please try again.");
+      toast.error(error.message || "Something went wrong. Please try again.");
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
-}
+  }
 
   if (!token || !email) {
     return (
@@ -205,5 +202,18 @@ export default function ResetPassword() {
         )}
       </Card>
     </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function ResetPassword() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
