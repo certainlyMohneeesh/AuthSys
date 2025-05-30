@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Authentication Microservice
 
-## Getting Started
+A complete authentication system that can be easily integrated into any Next.js project.
 
-First, run the development server:
+## Features
+
+- Email/Password authentication
+- OAuth providers (Google, GitHub)
+- Password reset flow
+- Email notifications
+- TypeScript support
+- UI components included
+- Prisma database integration
+
+## Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install @your-org/auth-service
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Add required environment variables to your `.env`:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+DATABASE_URL="your_database_url"
+NEXTAUTH_SECRET="your_secret"
+NEXTAUTH_URL="http://localhost:3000"
+GITHUB_CLIENT_ID=""
+GITHUB_CLIENT_SECRET=""
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
+MAILTRAP_API_KEY=""
+```
 
-## Learn More
+2. Import and use the components:
 
-To learn more about Next.js, take a look at the following resources:
+```tsx
+import { SignIn, SignUp, AuthProvider } from '@your-org/auth-service';
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+// Wrap your app with AuthProvider
+function App({ children }) {
+  return (
+    <AuthProvider>
+      {children}
+    </AuthProvider>
+  );
+}
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+// Use the components
+function LoginPage() {
+  return <SignIn />;
+}
+```
 
-## Deploy on Vercel
+3. Run Prisma migrations:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npx prisma migrate dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Documentation
+
+For detailed documentation and examples, visit [docs-url].
+
+## License
+
+MIT
