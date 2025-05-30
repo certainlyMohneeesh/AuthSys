@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 
 import { db, getUserByEmail } from "./db";
+import { sendLoginNotificationEmail } from "./email";
 
 /**
  * NextAuth configuration options
@@ -48,13 +49,9 @@ export const authOptions: NextAuthOptions = {
                     throw new Error("Invalid email or password");
                 }
 
-                // Send email notification for successful login
+                // Send email notification for successful login using direct function call
                 try {
-                    await fetch(`${process.env.NEXTAUTH_URL}/api/auth/send-login-notification`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ email: user.email }),
-                    });
+                    await sendLoginNotificationEmail(user.email);
                 } catch (error) {
                     console.error("Failed to send login notification:", error);
                 }
