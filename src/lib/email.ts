@@ -36,6 +36,7 @@ async function sendWithMailtrap({ to, subject, html }: EmailOptions): Promise<bo
   try {
       const response = await fetch("https://send.api.mailtrap.io/api/send", {
           method: "POST",
+          cache: 'no-store', // Prevent Next.js from caching the response
           headers: {
               "Content-Type": "application/json",
               "Authorization": `Bearer ${process.env.MAILTRAP_API_KEY}`,
